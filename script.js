@@ -1,46 +1,43 @@
+const apiUrl = 'news.json'; 
+const fetchNewsBtn = document.getElementById('fetchNewsBtn');
+const newsContainer = document.getElementById('newsContainer');
 let articles = [];
-let currentIndex = 0;
 
-document.getElementById("fetchNewsBtn").addEventListener("click", fetchNews);
-
-function fetchNews() {
-  const apiKey = 'be9e7913abb549bab7e92604ab1dfe19';
-  const apiUrl = `https://newsapi.org/v2/top-headlines?country=us&apiKey=${apiKey}`;
-
-  if (articles.length === 0) {
-    fetch(apiUrl)
-      .then(response => response.json())
-      .then(data => {
+async function fetchNews() {
+    try {
+        const response = await fetch(apiUrl); 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Fetched articles:", data.articles);
         articles = data.articles;
-        displayArticle();
-      })
-      .catch(error => {
-        console.error("Error fetching news:", error);
-        document.getElementById("newsContainer").innerHTML = "<p>Failed to load news.</p>";
-      });
-  } else {
-    displayArticle();
-  }
+        renderRandomArticle();
+    } catch (error) {
+        console.error('Error fetching news:', error);
+        newsContainer.innerHTML = '<p>Error fetching articles.</p>';
+    }
 }
 
-function displayArticle() {
-  const newsContainer = document.getElementById("newsContainer");
-  newsContainer.innerHTML = ''; // Clear previous article
-
-  if (currentIndex < articles.length) {
-    const article = articles[currentIndex];
-    const newsArticle = document.createElement('div');
-    newsArticle.classList.add('news-article', `bg-${currentIndex % 4}`); // Assign a background color
-
-    newsArticle.innerHTML = `
-      <h2>${article.title}</h2>
-      <p>${article.description || "No description available"}</p>
-      <a href="${article.url}" target="_blank">Read more</a>
-    `;
-
-    newsContainer.appendChild(newsArticle);
-    currentIndex++;
-  } else {
-    newsContainer.innerHTML = "<p>No more articles to display.</p>";
-  }
+function renderRandomArticle() {
+    newsContainer.innerHTML = ''; // Clear the container
+    if (articles.length > 0) {
+        const randomIndex = Math.floor(Math.random() * articles.length);
+        const article = articles[randomIndex];
+        const articleElement = document.createElement('div');
+        articleElement.className = 'news-article';
+        articleElement.innerHTML = `
+            <h2>${article.title}</h2>
+            <p>${article.description}</p>
+            <img src="${article.urlToImage}" alt="${article.title}">
+        `;
+        articleElement.addEventListener('click', () => {
+            window.open(article.url, '_blank');
+        });
+        newsContainer.appendChild(articleElement);
+    } else {
+        newsContainer.innerHTML = '<p>No articles available.</p>';
+    }
 }
+
+fetchNewsBtn.addEventListener('click', fetchNews);
